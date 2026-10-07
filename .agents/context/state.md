@@ -49,7 +49,7 @@ regressing per region yields exactly the paper's **1,083** glaciers, confirming 
 artifact behind the published rates. The 245-glacier CSV beside it is the older 50-per-region
 vintage, kept for comparison.
 
-⚠️ **Two methodological findings from the recovered analysis notebook**
+⚠️ **Three methodological findings from the recovered analysis notebook**
 (`notebooks/analysis/regional_decline.ipynb`):
 
 1. **The bootstrap weighting is inverted.** The code computes
@@ -72,6 +72,18 @@ vintage, kept for comparison.
 2. **There is an undocumented quality filter.** `rel_decline` keeps only glaciers whose predicted
    area is within 8% of the GLIMS training area (`rel_error_train < 8`). The paper does not mention
    it, and it gates every regional result.
+
+3. **Trient is dropped by an off-by-two slice.** Cell 1 ends with
+   `predicted_no_thresh.iloc[:,2:]`. After the annual `groupby`, the first two columns are glaciers,
+   not dates: `G007026E45991N` (Trient, the paper's case study) and `G007045E45994N`. That is the
+   whole gap between the file's 1,085 columns and the paper's 1,083. Left in place, since fixing it
+   changes the published numbers.
+
+The notebook needs pandas < 3 semantics in one place: `float()` on a one-element Series, which
+pandas 3 removed. Under pandas 3 cell 4's bare `except` swallowed that error for every glacier, so
+cells 4–6 failed. Now `float(s.item())`; verified 2026-10-07 to reproduce the paper's cumulative
+declines (Europe 16.4%, Caucasus 9.0%, Asia 7.0%, S. America 2.6%; N. America 1.5% vs. the
+paper's 2.3%, with an unseeded bootstrap).
 Note `geog_area_rollup` here includes **Oceania**, which the SQL treats as southern-hemisphere but
 which never appears among the paper's five regions; those 35 glaciers drop out somewhere.
 
